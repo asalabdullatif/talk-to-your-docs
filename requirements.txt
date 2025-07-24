@@ -1,0 +1,26 @@
+# Core dependencies
+streamlit==1.27.2
+python-dotenv==1.0.0
+
+# PDF processing
+pdfplumber==0.10.2
+Pillow==10.0.1  # Required by pdfplumber
+
+# LangChain and related
+langchain==0.0.350
+langchain-community==0.0.13
+faiss-cpu==1.7.4  # CPU version for vector storage
+
+# Machine Learning and NLP
+torch==2.1.1 --index-url https://download.pytorch.org/whl/cpu  # CPU-only PyTorch
+transformers==4.35.2
+sentence-transformers==2.2.2
+numpy==1.24.3
+scikit-learn==1.3.2
+pandas==2.0.3
+
+# HTTP and API
+requests==2.31.0
+huggingface-hub==0.19.4
+typing-extensions>=4.5.0  # Required by several packages
+tqdm>=4.65.0  # Required for progress bars
