@@ -3,7 +3,7 @@ import streamlit as st
 import pdfplumber
 from dotenv import load_dotenv
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.llms import HuggingFaceHub
+from langchain_openai import ChatOpenAI
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import FAISS
 from langchain.chains import RetrievalQA
@@ -14,14 +14,13 @@ load_dotenv()
 
 # Configuration
 EMBEDDINGS_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-LLM_MODEL_NAME = "google/flan-t5-base"
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
 TOP_K_RESULTS = 3
 
-# Check for HuggingFace API token
-if not os.getenv("HUGGINGFACE_API_TOKEN"):
-    raise ValueError("Please set HUGGINGFACE_API_TOKEN in .env file")
+# Check for OpenAI API key
+if not os.getenv("OPENAI_API_KEY"):
+    raise ValueError("Please set OPENAI_API_KEY in .env file")
 
 def extract_text_from_pdf(pdf_file):
     """
@@ -55,23 +54,20 @@ def initialize_rag_components():
         model_kwargs={'device': 'cpu'}
     )
     
-    # Initialize LLM
-    llm = HuggingFaceHub(
-        repo_id=LLM_MODEL_NAME,
-        huggingfacehub_api_token=os.getenv("HUGGINGFACE_API_TOKEN"),
-        model_kwargs={'temperature': 0.5, 'max_length': 512}
+    # Initialize LLM (using GPT-3.5-turbo)
+    llm = ChatOpenAI(
+        model_name="gpt-3.5-turbo",
+        temperature=0.1
     )
     
     # Create prompt template
-    # TODO: Experiment with different prompt templates for better results
-    prompt_template = """Use the following pieces of context to answer the question at the end. 
-    If you don't know the answer, just say that you don't know, don't try to make up an answer.
-    
-    Context: {context}
-    
-    Question: {question}
-    
-    Answer:"""
+    prompt_template = """Answer the following question based on the given context. If you cannot find the answer in the context, say "I don't have enough information to answer this question."
+
+Context: {context}
+
+Question: {question}
+
+Answer:"""
     
     return embeddings, llm, PromptTemplate(
         template=prompt_template,
@@ -94,12 +90,12 @@ def create_retrieval_qa_chain(docs, embeddings, llm, prompt):
     text_splitter = CharacterTextSplitter(
         chunk_size=CHUNK_SIZE,
         chunk_overlap=CHUNK_OVERLAP,
-        length_function=len
+        length_function=len,
+        separator="\n"  # Split on newlines for better context preservation
     )
     texts = text_splitter.split_text(docs)
     
     # Create vector store
-    # TODO: Add persistence to save embeddings for future use
     vectorstore = FAISS.from_texts(texts=texts, embedding=embeddings)
     
     # Create retrieval QA chain
@@ -107,13 +103,17 @@ def create_retrieval_qa_chain(docs, embeddings, llm, prompt):
         llm=llm,
         chain_type="stuff",
         retriever=vectorstore.as_retriever(search_kwargs={'k': TOP_K_RESULTS}),
-        chain_type_kwargs={'prompt': prompt}
+        chain_type_kwargs={
+            'prompt': prompt,
+            'verbose': True  # Enable verbose mode for debugging
+        },
+        return_source_documents=True
     )
     
     return qa_chain
 
 def main():
-    st.title("Talk to Your Data 📚")
+    st.title("Talk to Your Docs 📚")
     st.write("Upload a PDF and ask questions about its content!")
     
     # Initialize RAG components
@@ -139,14 +139,26 @@ def main():
                     with st.spinner("Searching for answer..."):
                         try:
                             # Get answer
-                            response = qa_chain.run(question)
+                            result = qa_chain({"query": question})
                             
                             # Display answer
                             st.write("### Answer:")
-                            st.write(response)
+                            if isinstance(result, dict) and "result" in result:
+                                st.write(result["result"])
+                            else:
+                                st.write(str(result))  # Fallback for unexpected response format
+                            
+                            # Display source documents
+                            if isinstance(result, dict) and "source_documents" in result:
+                                with st.expander("View source chunks"):
+                                    for i, doc in enumerate(result["source_documents"]):
+                                        st.write(f"Chunk {i+1}:")
+                                        st.write(doc.page_content)
+                                        st.write("---")
                             
                         except Exception as e:
                             st.error(f"Error generating answer: {str(e)}")
+                            st.error("Please try rephrasing your question or uploading a different document.")
 
 if __name__ == "__main__":
     main()
@@ -155,10 +167,6 @@ if __name__ == "__main__":
 # 1. Add support for multiple PDF uploads
 # 2. Implement chat history and conversation memory
 # 3. Add FAISS index persistence to disk
-# 4. Make embedding and LLM models configurable via UI (could be deprioritized)
-# 5. Add error handling and retry logic for API calls (could be deprioritized)
-# 6. Implement progress bars for document processing (could be deprioritized)
-# 7. Add option to view retrieved context chunks (could be deprioritized)
-# 8. Implement Arabic support using Arabic models
-# 9. Add document preprocessing options (e.g., remove headers/footers) (could be deprioritized)
-# 10. Add example PDFs and questions for demo purposes 
+# 4. Implement Arabic support using Arabic models (important)
+# 5. Add example PDFs and questions for demo purposes 
+# 6. Change from Openai LLM to a HF free model (important)

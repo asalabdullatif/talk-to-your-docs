@@ -4,12 +4,13 @@ python-dotenv==1.0.0
 
 # PDF processing
 pdfplumber==0.10.2
-Pillow==10.0.1  # Required by pdfplumber
+Pillow==10.0.1
 
 # LangChain and related
 langchain==0.0.350
 langchain-community==0.0.13
-faiss-cpu==1.7.4  # CPU version for vector storage
+langchain-openai==0.0.5
+faiss-cpu==1.7.4
 
 # Machine Learning and NLP
 torch==2.1.1 --index-url https://download.pytorch.org/whl/cpu  # CPU-only PyTorch
@@ -24,3 +25,4 @@ requests==2.31.0
 huggingface-hub==0.19.4
 typing-extensions>=4.5.0  # Required by several packages
 tqdm>=4.65.0  # Required for progress bars
+openai>=1.0.0
