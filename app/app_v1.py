@@ -1,3 +1,4 @@
+# Version 1 of the application, which uses Langchain and OpenAI's LLM for a basic RAG pipeline
 import os
 import streamlit as st
 import pdfplumber
@@ -163,10 +164,13 @@ def main():
 if __name__ == "__main__":
     main()
 
-# TODO: Future Enhancements
-# 1. Add support for multiple PDF uploads
-# 2. Implement chat history and conversation memory
-# 3. Add FAISS index persistence to disk
-# 4. Implement Arabic support using Arabic models (important)
-# 5. Add example PDFs and questions for demo purposes 
-# 6. Change from Openai LLM to a HF free model (important)
+# TODO: Future Enhancements:
+# P1 Improvements: 
+# - Start replacing LangChain RAG with a custom RAG pipeline, step by step, such as: embeddings, chunking, retrieval, etc.
+# - Implement Arabic support using Arabic models
+# - Change from Openai LLM to a HF free model
+# P2 Improvements:
+# - Add support for multiple PDF uploads
+# - Implement chat history and conversation memory
+# - Add FAISS index persistence to disk
+# - Add example PDFs and questions for demo purposes 
